@@ -6,7 +6,6 @@ COPY . .
 
 RUN mvn package -DskipTests
 
-
 FROM java:8-jdk
 
 WORKDIR /app

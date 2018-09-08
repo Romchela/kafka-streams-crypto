@@ -4,6 +4,9 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import ru.romchela.kafkastreams.crypto.dto.SourceWeight;
 
+/**
+ * Static weight information each source from configuration file
+ */
 @ConfigurationProperties
 public class SourcesProperties {
 

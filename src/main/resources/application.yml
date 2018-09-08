@@ -1,12 +1,12 @@
 kstreams:
-    kafkaTopic: avgtopic
-    resultStoreName: AVGSTORE
+    kafkaTopic: topic
+    resultStoreName: CRYPTO_STORE
     bootstrapServer: localhost:9092
-    applicationId: kaffka-test
-    clientId: kaffka-test-client
+    applicationId: kaffka-crypto-app
+    clientId: kaffka-crypto-client
     autoOffsetReset: earliest
     stateDir: /tmp/kafka-streams
-    commitInterval: 10000
+    commitInterval: 100
 
 sources:
     - name: kraken

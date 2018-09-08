@@ -3,7 +3,7 @@ package ru.romchela.kafkastreams.crypto.configuration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- *
+ * Configuration for kafka-streams
  */
 @ConfigurationProperties(prefix = "kstreams")
 public class ApplicationProperties {

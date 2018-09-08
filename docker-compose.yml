@@ -1,12 +1,12 @@
-version: '3'
+version: "3.2"
 services:
-
-  app:
-    build: .
+  kafka:
+    image: spotify/kafka
     ports:
-     - "8080:8080"
-
-#  kafka:
-#    image: "confluentinc/docker-images"
-#    ports:
-#      - "9092:9092"
+      - "9092:9092"
+      - "2181:2181"
+    environment:
+      - AUTO_CREATE_TOPICS=true
+      - ADVERTISED_HOST=localhost
+      - ADVERTISED_PORT=9092
+    restart: on-failure

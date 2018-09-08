@@ -1,6 +1,7 @@
 package ru.romchela.kafkastreams.crypto;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -38,6 +39,12 @@ import ru.romchela.kafkastreams.crypto.serde.WeightedArithmeticMeanSerde;
 @EnableConfigurationProperties({ApplicationProperties.class, SourcesProperties.class})
 public class CryptoApplication {
 
+    /**
+     * Create stream builder and set all aggregation with data logic
+     * @param properties - kafka-stream properties
+     * @param sourcesProperties - static information about sources
+     * @return Stream builder
+     */
     @Bean
     public Topology kStreamsTopology(final ApplicationProperties properties,
                                      final SourcesProperties sourcesProperties) {
@@ -47,14 +54,14 @@ public class CryptoApplication {
             .collect(Collectors.toMap(SourceWeight::getName, SourceWeight::getWeight));
 
         final StreamsBuilder builder = new StreamsBuilder();
-        final Consumed<Integer, BrokerMessage> consumed = Consumed.with(Serdes.Integer(), new BrokerMessageSerde());
+        final Consumed<String, BrokerMessage> consumed = Consumed.with(Serdes.String(), new BrokerMessageSerde());
 
         // Build input kafka stream. It's important to have key-value elements, so we have dummy integer key.
-        final KStream<Integer, BrokerMessage> inputKStream = builder.stream(properties.getKafkaTopic(), consumed);
+        final KStream<String, BrokerMessage> inputKStream = builder.stream(properties.getKafkaTopic(), consumed);
 
         // Build grouped stream by product name.
         final KGroupedStream<String, BrokerMessage> group = inputKStream
-            .map((key, value) -> KeyValue.pair(value.getProduct(), value))
+            .map((key, value) -> KeyValue.pair(value.getProduct().toLowerCase(), value))
             .groupByKey(Serialized.with(Serdes.String(), new BrokerMessageSerde()));
 
         final KTable<String, WeightedArithmeticMean> weightedArithmeticMeanKTable = group.aggregate(
@@ -81,7 +88,7 @@ public class CryptoApplication {
         // We materialize it to special store and then we'll use it in CryptoController.
         final String storeName = properties.getResultStoreName();
         weightedArithmeticMeanKTable.mapValues(
-            v -> v.getNumerator().add(v.getDenominator()).doubleValue(),
+            v -> v.getNumerator().divide(v.getDenominator(), RoundingMode.HALF_EVEN).doubleValue(),
             Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as(storeName)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(Serdes.Double()));
@@ -89,6 +96,12 @@ public class CryptoApplication {
         return builder.build();
     }
 
+    /**
+     * Build kafka-streams object with all important properties
+     * @param applicationProperties - kafka-stream properties
+     * @param sourcesProperties - static information about sources
+     * @return KafkaStreams object
+     */
     @Bean
     public KafkaStreams kafkaStreams(final ApplicationProperties applicationProperties,
                                      final SourcesProperties sourcesProperties) {
