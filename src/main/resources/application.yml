@@ -1,0 +1,17 @@
+kstreams:
+    kafkaTopic: avgtopic
+    resultStoreName: AVGSTORE
+    bootstrapServer: localhost:9092
+    applicationId: kaffka-test
+    clientId: kaffka-test-client
+    autoOffsetReset: earliest
+    stateDir: /tmp/kafka-streams
+    commitInterval: 10000
+
+sources:
+    - name: kraken
+      weight: 0.7
+    - name: exmo
+      weight: 1
+    - name: binance
+      weight: 0.4
