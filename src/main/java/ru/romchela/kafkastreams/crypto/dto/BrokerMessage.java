@@ -1,5 +1,8 @@
 package ru.romchela.kafkastreams.crypto.dto;
 
+/**
+ * Message which comes to kafka topic
+ */
 public class BrokerMessage {
 
     private String product;

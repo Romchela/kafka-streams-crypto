@@ -2,6 +2,9 @@ package ru.romchela.kafkastreams.crypto.dto;
 
 import java.math.BigDecimal;
 
+/**
+ * Model for recalculating weighted arithmetic mean of each product
+ */
 public class WeightedArithmeticMean {
 
     private BigDecimal numerator;

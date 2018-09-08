@@ -42,20 +42,27 @@ public class CryptoApplication {
     public Topology kStreamsTopology(final ApplicationProperties properties,
                                      final SourcesProperties sourcesProperties) {
 
+        // Build map to get quick access to weight by product name.
         final Map<String, Double> weightBySource = sourcesProperties.getSources().stream()
             .collect(Collectors.toMap(SourceWeight::getName, SourceWeight::getWeight));
 
         final StreamsBuilder builder = new StreamsBuilder();
         final Consumed<Integer, BrokerMessage> consumed = Consumed.with(Serdes.Integer(), new BrokerMessageSerde());
+
+        // Build input kafka stream. It's important to have key-value elements, so we have dummy integer key.
         final KStream<Integer, BrokerMessage> inputKStream = builder.stream(properties.getKafkaTopic(), consumed);
 
+        // Build grouped stream by product name.
         final KGroupedStream<String, BrokerMessage> group = inputKStream
             .map((key, value) -> KeyValue.pair(value.getProduct(), value))
             .groupByKey(Serialized.with(Serdes.String(), new BrokerMessageSerde()));
 
-        final KTable<String, WeightedArithmeticMean> resultPrice = group.aggregate(
+        final KTable<String, WeightedArithmeticMean> weightedArithmeticMeanKTable = group.aggregate(
             WeightedArithmeticMean::new,
             (key, value, aggregation) -> {
+                // Main function which calculates weighted arithmetic mean.
+                // We have current price for the product in 'aggregation' variable and new price in 'value'.
+                // And we combine these values here to get actual weighted arithmetic mean.
                 final BigDecimal numerator = aggregation.getNumerator();
                 final BigDecimal denominator = aggregation.getDenominator();
                 final BigDecimal currentPrice = BigDecimal.valueOf(value.getPrice());
@@ -70,11 +77,14 @@ public class CryptoApplication {
             Materialized.with(Serdes.String(), new WeightedArithmeticMeanSerde())
         );
 
-       resultPrice.mapValues(
-            v -> v.getNumerator().add(v.getDenominator()).toString(),
-            Materialized.<String, String, KeyValueStore<Bytes, byte[]>> as(properties.getResultStoreName())
+        // Build KTable which helps to find weighted arithmetic mean by product name.
+        // We materialize it to special store and then we'll use it in CryptoController.
+        final String storeName = properties.getResultStoreName();
+        weightedArithmeticMeanKTable.mapValues(
+            v -> v.getNumerator().add(v.getDenominator()).doubleValue(),
+            Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as(storeName)
                 .withKeySerde(Serdes.String())
-                .withValueSerde(Serdes.String()));
+                .withValueSerde(Serdes.Double()));
 
         return builder.build();
     }

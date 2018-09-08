@@ -1,5 +1,8 @@
 package ru.romchela.kafkastreams.crypto.dto;
 
+/**
+ * This model is needed to read name and weight of sources from configuration
+ */
 public class SourceWeight {
 
     private String name;
