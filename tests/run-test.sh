@@ -12,15 +12,13 @@ docker-compose up --force-recreate --abort-on-container-exit > /dev/null 2>&1 &
 sleep 8
 
 pid=$!
-if ps | grep "$pid[^[]" >/dev/null
-then
-    echo "Kafka is running..."
+if ps | grep "$pid[^[]" >/dev/null then
+	echo "Kafka is running..."
 else
-    if wait $pid
-    then
-    	echo "Kafka is running..."
+	if wait $pid then
+		echo "Kafka is running..."
 	else
-        echo "Kafka failed on start!"
+		echo "Kafka failed on start!"
 		exit 1
     fi
 fi
@@ -33,17 +31,15 @@ pid=$!
 
 sleep 10
 
-if ps | grep "$pid[^[]" >/dev/null
-then
-    echo "Spring-boot application is running..."
+if ps | grep "$pid[^[]" >/dev/null then
+	echo "Spring-boot application is running..."
 else
-    if wait $pid
-    then
-    	echo "Spring-boot application is running..."
+	if wait $pid then
+		echo "Spring-boot application is running..."
 	else
-        echo "Spring-boot application failed on start!"
+		echo "Spring-boot application failed on start!"
 		exit 1
-    fi
+	fi
 fi
 
 cd tests
