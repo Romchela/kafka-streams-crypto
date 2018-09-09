@@ -1,6 +1,6 @@
 # Kafka-Streams crypto
 
-This test application which calculates current price of different crypto currencies. Information goes to kafka and then price is available by REST API.
+This test application which calculates current price of different crypto currencies. Information goes to kafka and then price is available by REST API. Coefficients of each stock is located in ```application.yml``` file.
 
 ## Dependecies
 1) Python3 and kafka-python library
