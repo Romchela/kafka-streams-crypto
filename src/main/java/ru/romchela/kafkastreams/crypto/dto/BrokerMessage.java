@@ -9,7 +9,7 @@ public class BrokerMessage {
 
     private String source;
 
-    private Long price;
+    private Double price;
 
     public String getProduct() {
         return product;
@@ -27,11 +27,11 @@ public class BrokerMessage {
         this.source = source;
     }
 
-    public Long getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(Long price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 }

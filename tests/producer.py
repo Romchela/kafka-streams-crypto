@@ -12,4 +12,5 @@ producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=la
 future = producer.send('topic', key=b'1111', value={'product': sys.argv[1], 'source': sys.argv[2], 'price': sys.argv[3]})
 future.get(timeout=60)
 
-time.sleep(2)
+time.sleep(1)
+print('Produced: ' + sys.argv[1] + ', ' + sys.argv[2] + ', ' + sys.argv[3])

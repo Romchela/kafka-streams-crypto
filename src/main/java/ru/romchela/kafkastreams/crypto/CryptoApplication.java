@@ -20,6 +20,8 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -39,6 +41,8 @@ import ru.romchela.kafkastreams.crypto.serde.WeightedArithmeticMeanSerde;
 @EnableConfigurationProperties({ApplicationProperties.class, SourcesProperties.class})
 public class CryptoApplication {
 
+    private static final Logger logger = LoggerFactory.getLogger(CryptoApplication.class);
+
     /**
      * Create stream builder and set all aggregation with data logic
      * @param properties - kafka-stream properties
@@ -48,6 +52,11 @@ public class CryptoApplication {
     @Bean
     public Topology kStreamsTopology(final ApplicationProperties properties,
                                      final SourcesProperties sourcesProperties) {
+
+        if (sourcesProperties == null || sourcesProperties.getSources() == null) {
+            logger.error("Sources configuration cannot be loaded!");
+            return null;
+        }
 
         // Build map to get quick access to weight by product name.
         final Map<String, Double> weightBySource = sourcesProperties.getSources().stream()
@@ -73,8 +82,13 @@ public class CryptoApplication {
                 final BigDecimal numerator = aggregation.getNumerator();
                 final BigDecimal denominator = aggregation.getDenominator();
                 final BigDecimal currentPrice = BigDecimal.valueOf(value.getPrice());
+                final String sourceName = value.getSource().toLowerCase();
 
-                final double weight = weightBySource.getOrDefault(value.getSource(), 0.0);
+                if (!weightBySource.containsKey(sourceName)) {
+                    logger.warn("Source \"{}\" cannot be found in configuration file", sourceName);
+                }
+
+                final double weight = weightBySource.getOrDefault(sourceName, 0.0);
                 final BigDecimal bigDecimalWeight = BigDecimal.valueOf(weight);
 
                 aggregation.setNumerator(numerator.add(bigDecimalWeight.multiply(currentPrice)));
@@ -87,11 +101,16 @@ public class CryptoApplication {
         // Build KTable which helps to find weighted arithmetic mean by product name.
         // We materialize it to special store and then we'll use it in CryptoController.
         final String storeName = properties.getResultStoreName();
-        weightedArithmeticMeanKTable.mapValues(
-            v -> v.getNumerator().divide(v.getDenominator(), RoundingMode.HALF_EVEN).doubleValue(),
-            Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as(storeName)
-                .withKeySerde(Serdes.String())
-                .withValueSerde(Serdes.Double()));
+        weightedArithmeticMeanKTable
+            .filter((key, value) -> !value.getDenominator().equals(BigDecimal.ZERO))
+            .mapValues(
+                value -> value.getNumerator()
+                    .divide(value.getDenominator(), RoundingMode.HALF_EVEN)
+                    .setScale(3, RoundingMode.HALF_EVEN)
+                    .doubleValue(),
+                Materialized.<String, Double, KeyValueStore<Bytes, byte[]>>as(storeName)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.Double()));
 
         return builder.build();
     }
@@ -105,6 +124,11 @@ public class CryptoApplication {
     @Bean
     public KafkaStreams kafkaStreams(final ApplicationProperties applicationProperties,
                                      final SourcesProperties sourcesProperties) {
+
+        if (applicationProperties.getApplicationId() == null) {
+            logger.error("KStreams application configuration cannot be loaded!");
+            return null;
+        }
 
         final Properties properties = new Properties();
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationProperties.getApplicationId());
