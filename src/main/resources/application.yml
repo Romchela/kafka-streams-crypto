@@ -2,7 +2,7 @@ logging.file: logs/spring-boot.log
 kstreams:
     kafkaTopic: topic
     resultStoreName: CRYPTO_STORE
-    bootstrapServer: localhost:9092
+    bootstrapServer: kafka:9092
     applicationId: kaffka-crypto-app
     clientId: kaffka-crypto-client
     autoOffsetReset: earliest

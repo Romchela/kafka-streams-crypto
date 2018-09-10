@@ -1,12 +1,20 @@
-version: "3.2"
+version: '3'
 services:
+  zookeeper:
+    image: zookeeper
+    ports:
+      - "2181:2181"
   kafka:
-    image: spotify/kafka
+    image: wurstmeister/kafka
     ports:
       - "9092:9092"
-      - "2181:2181"
     environment:
-      - AUTO_CREATE_TOPICS=true
-      - ADVERTISED_HOST=localhost
-      - ADVERTISED_PORT=9092
-    restart: on-failure
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "topic:1:1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  web:
+    build: .
+    ports:
+      - "8080:8080"
