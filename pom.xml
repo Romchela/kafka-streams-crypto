@@ -27,7 +27,7 @@
 
     <properties>
         <mvn.compiler.version>3.5.1</mvn.compiler.version>
-        <apache.kafka.version>1.0.0</apache.kafka.version>
+        <apache.kafka.version>3.9.2</apache.kafka.version>
         <reactor.kafka.version>1.0.0.RELEASE</reactor.kafka.version>
         <twitter4j.version>4.0.5</twitter4j.version>
         <emoji.version>4.0.0</emoji.version>
